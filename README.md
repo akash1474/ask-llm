@@ -50,13 +50,7 @@ Premake5 is used as the build system. Follow these steps to install it:
 
 2. Extract the downloaded archive.
 
-3. Add Premake5 to your system 
-
-    ```
-    PATH
-    ```
-
-    :
+3. Add Premake5 to your system PATH:
 
     - Open **System Properties** → **Advanced** → **Environment Variables**.
     - Under `System Variables`, find `Path` and click **Edit**.
@@ -65,9 +59,7 @@ Premake5 is used as the build system. Follow these steps to install it:
 
 4. Verify installation by running the following command in 
 
-    Command Prompt
-
-    :
+    Command Prompt:
 
     ```sh
     premake5 --version
@@ -88,18 +80,14 @@ Premake5 is used as the build system. Follow these steps to install it:
 
 Once all dependencies are installed, follow these steps:
 
-1. Clone the repository
-
-    :
+1. Clone the repository:
 
     ```sh
     git clone https://github.com/yourusername/ask-llm.git
     cd ask-llm
     ```
 
-2. Run the setup script
-
-     (Only required once):
+2. Run the setup script (Only required once):
 
     ```sh
     setup.bat

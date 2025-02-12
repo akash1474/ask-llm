@@ -22,6 +22,7 @@ includeDirs["SpdLog"]="packages/spdlog/include"
 includeDirs["ImGui"]="packages/imgui"
 includeDirs["LunaSVG"]="packages/lunasvg/include"
 includeDirs["nlohmann"]="packages/nlohmann"
+includeDirs["md4c"]="packages/md4c/src"
 
 -- /MP -- Multithreaded build 
 -- /MT -- Static Linking. Defines _MT 
@@ -29,6 +30,7 @@ includeDirs["nlohmann"]="packages/nlohmann"
 include "packages/glfw"
 include "packages/imgui"
 include "packages/lunasvg"
+include "packages/md4c"
 
 project "glfw_opengl"
    kind "ConsoleApp"
@@ -40,7 +42,7 @@ project "glfw_opengl"
    pchsource "src/pch.cpp"
 
    links {
-      "glfw","ImGui","opengl32","LunaSVG","dwmapi","Shlwapi","winmm"
+      "glfw","ImGui","opengl32","LunaSVG","dwmapi","Shlwapi","winmm","md4c"
    }
 
    includedirs{
@@ -49,6 +51,7 @@ project "glfw_opengl"
       "%{includeDirs.ImGui}",
       "%{includeDirs.LunaSVG}",
       "%{includeDirs.SpdLog}",
+      "%{includeDirs.md4c}",
       "%{includeDirs.nlohmann}"
    }
 

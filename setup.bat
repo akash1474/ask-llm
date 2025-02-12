@@ -4,6 +4,7 @@ rem "Use `setup imgui-docking` to setup with imgui-docking branch"
 
 set glfw=https://github.com/glfw/glfw.git
 set nlohmannjson=https://github.com/nlohmann/json.git
+set md4c=https://github.com/mity/md4c.git
 set lunasvg=https://github.com/sammycage/lunasvg.git
 set imgui=-o imgui.zip https://codeload.github.com/ocornut/imgui/zip/refs/tags/v1.91.8
 set spdlog=-o spdlog.zip https://codeload.github.com/gabime/spdlog/zip/refs/tags/v1.12.0
@@ -13,6 +14,11 @@ set spdlog=-o spdlog.zip https://codeload.github.com/gabime/spdlog/zip/refs/tags
 echo -- Cloning glfw github repo
 git clone --depth 1 %glfw%
 echo.
+
+echo -- Cloning md4c github repo
+git clone --depth 1 %md4c%
+echo.
+
 
 echo -- Cloning nlohmannjson github repo
 git clone --depth 1 %nlohmannjson%

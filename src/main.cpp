@@ -40,16 +40,7 @@ std::string parseMarkdown(const std::string& markdown) {
     std::string parsedOutput;
 
     // Define an MD_PARSER struct
-    MD_PARSER parser = {
-        0, // Flags
-        MD_FLAG_PERMISSIVEAUTOLINKS, // block callback (optional)
-        my_callback, // Correctly typed text callback
-        nullptr, // enter_block callback (optional)
-        nullptr, // leave_block callback (optional)
-        nullptr, // enter_span callback (optional)
-        nullptr, // leave_span callback (optional)
-        nullptr  // debug callback (optional)
-    };
+    MD_PARSER parser;
 
     // Parse the Markdown text
     if (md_parse(markdown.c_str(), markdown.size(), &parser, &parsedOutput) != 0) {
@@ -81,7 +72,6 @@ void TestMD4C(){
 
 
 
-
 int main(int argc, char* argv[])
 {
     OpenGL::Timer timer;
@@ -94,6 +84,7 @@ int main(int argc, char* argv[])
     // Initialize ImGUI
     if (!Application::InitImGui())
         return -1;
+    
     Application::InitFonts();
 
     if (argc > 1)
@@ -103,7 +94,7 @@ int main(int argc, char* argv[])
     Application::SetWindowIsFocused(true);
     Application::SetFrameRate(120.0f);
 
-    TestMD4C();
+    // TestMD4C();
 
     
     while (!glfwWindowShouldClose(Application::GetGLFWwindow())) {

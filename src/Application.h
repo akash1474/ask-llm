@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include "GLFW/glfw3.h"
+#include "ChatWindow.h"
 
 class Application
 {
@@ -13,7 +14,7 @@ private:
 	bool mIsFocused;
 	bool mRunAtMaxRefreshRate=false;
 	bool mEnableRunAtMaxRefreshRate=false;
-
+	ChatWindow mChatWindow;
 
 
 public:

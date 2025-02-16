@@ -68,7 +68,7 @@ project "glfw_opengl"
       symbols "On"
       staticruntime "On"
       optimize "Off"
-      buildoptions { "/MP","/DEBUG:FULL" }
+      buildoptions { "/MP","/DEBUG:FULL","/UNICODE" }
       defines {"GL_DEBUG"}
 
    filter {"configurations:Release"}

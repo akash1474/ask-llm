@@ -83,6 +83,17 @@ if exist lunasvg (
 	exit /b
 )
 
+if exist md4c (
+	echo .
+	echo Setting Up M4DC Package
+	move /y ".\md4c\md2html" ".\packages\md4c"
+	move /y ".\md4c\src" ".\packages\md4c"
+	move /y ".\md4c\scripts" ".\packages\md4c"
+) else (
+	echo [ md4c ] No directory found
+	exit /b
+)
+
 if not exist .\packages\imgui mkdir .\packages\imgui
 
 
@@ -102,4 +113,5 @@ rmdir /s /q imgui
 rmdir /s /q glfw
 rmdir /s /q lunasvg
 rmdir /s /q json
+rmdir /s /q md4c
 build

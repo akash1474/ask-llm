@@ -6,7 +6,6 @@
 #include "Application.h"
 #include "MultiThreading.h"
 #include <csignal>
-#include <filesystem>
 #include <shellapi.h>
 #include <stdio.h>
 #include <winuser.h>
@@ -25,8 +24,272 @@
 #include "resources/JetBrainsMonoNLRegular.embed"
 #include "resources/JetBrainsMonoNLItalic.embed"
 
+
+#include "imgui_markdown.h"
+#include "Shellapi.h"
+
 #undef min
 #undef max
+
+void LinkCallback( ImGui::MarkdownLinkCallbackData data_ );
+inline ImGui::MarkdownImageData ImageCallback( ImGui::MarkdownLinkCallbackData data_ );
+
+static ImFont* H1 = NULL;
+static ImFont* H2 = NULL;
+static ImFont* H3 = NULL;
+
+static ImGui::MarkdownConfig mdConfig; 
+
+
+void LinkCallback( ImGui::MarkdownLinkCallbackData data_ )
+{
+    std::string url( data_.link, data_.linkLength );
+    if( !data_.isImage )
+    {
+        ShellExecuteA( NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL );
+    }
+}
+
+inline ImGui::MarkdownImageData ImageCallback( ImGui::MarkdownLinkCallbackData data_ )
+{
+    // In your application you would load an image based on data_ input. Here we just use the imgui font texture.
+    ImTextureID image = ImGui::GetIO().Fonts->TexID;
+    // > C++14 can use ImGui::MarkdownImageData imageData{ true, false, image, ImVec2( 40.0f, 20.0f ) };
+    ImGui::MarkdownImageData imageData;
+    imageData.isValid =         true;
+    imageData.useLinkCallback = false;
+    imageData.user_texture_id = image;
+    imageData.size =            ImVec2( 40.0f, 20.0f );
+
+    // For image resize when available size.x > image width, add
+    ImVec2 const contentSize = ImGui::GetContentRegionAvail();
+    if( imageData.size.x > contentSize.x )
+    {
+        float const ratio = imageData.size.y/imageData.size.x;
+        imageData.size.x = contentSize.x;
+        imageData.size.y = contentSize.x*ratio;
+    }
+
+    return imageData;
+}
+
+void LoadFonts( float fontSize_ = 12.0f )
+{
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->Clear();
+    // Base font
+    // io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf",font_size+3,&font_config);
+    io.Fonts->AddFontFromFileTTF( "C:\\Windows\\Fonts\\segoeui.ttf", fontSize_ );
+    // Bold headings H2 and H3
+    H2 = io.Fonts->AddFontFromFileTTF( "C:\\Windows\\Fonts\\segoeuib.ttf", fontSize_ );
+    H3 = mdConfig.headingFormats[ 1 ].font;
+    // bold heading H1
+    float fontSizeH1 = fontSize_ * 1.1f;
+    H1 = io.Fonts->AddFontFromFileTTF( "C:\\Windows\\Fonts\\segoeuib.ttf", fontSizeH1 );
+}
+
+void ExampleMarkdownFormatCallback( const ImGui::MarkdownFormatInfo& markdownFormatInfo_, bool start_ )
+{
+    // Call the default first so any settings can be overwritten by our implementation.
+    // Alternatively could be called or not called in a switch statement on a case by case basis.
+    // See defaultMarkdownFormatCallback definition for furhter examples of how to use it.
+    ImGui::defaultMarkdownFormatCallback( markdownFormatInfo_, start_ );        
+       
+    switch( markdownFormatInfo_.type )
+    {
+    // example: change the colour of heading level 2
+    case ImGui::MarkdownFormatType::HEADING:
+    {
+        if( markdownFormatInfo_.level == 2 )
+        {
+            if( start_ )
+            {
+                ImGui::PushStyleColor( ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled] );
+            }
+            else
+            {
+                ImGui::PopStyleColor();
+            }
+        }
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
+}
+
+void Markdown( const std::string& markdown_ )
+{
+    // You can make your own Markdown function with your prefered string container and markdown config.
+    // > C++14 can use ImGui::MarkdownConfig mdConfig{ LinkCallback, NULL, ImageCallback, ICON_FA_LINK, { { H1, true }, { H2, true }, { H3, false } }, NULL };
+    mdConfig.linkCallback =         LinkCallback;
+    mdConfig.tooltipCallback =      NULL;
+    mdConfig.imageCallback =        ImageCallback;
+    mdConfig.linkIcon =             ICON_FA_LINK;
+    mdConfig.headingFormats[0] =    { H1, true };
+    mdConfig.headingFormats[1] =    { H2, true };
+    mdConfig.headingFormats[2] =    { H3, false };
+    mdConfig.userData =             NULL;
+    mdConfig.formatCallback =       ExampleMarkdownFormatCallback;
+    ImGui::Markdown( markdown_.c_str(), markdown_.length(), mdConfig );
+}
+
+void MarkdownExample()
+{
+    const std::string markdownText = u8R"(
+# 🚀 AskLLM - Context-Aware AI Q&A
+
+AskLLM is a powerful tool that allows users to ask questions to an LLM (Large Language Model) **without manually providing context**. The system automatically retrieves relevant project data using **Retrieval-Augmented Generation (RAG) and other techniques**, ensuring that the LLM understands your queries in the right context.
+
+## ✨ Features
+
+- **Context-Aware Questioning** - No need to explain project details; the system handles context retrieval.
+- **Seamless Integration** - Works with any project structure.
+- **Fast & Accurate Responses** - Uses RAG to fetch relevant data before querying the LLM.
+- **C++ GUI with OpenGL** - A sleek and efficient interface for seamless interaction.
+
+## 🔧 Installation
+
+### Prerequisites
+
+- **C++17 or later**
+- **OpenGL 3.3+**
+- **CMake** (for building the project)
+- **Python 3.x** (for LLM backend, if applicable)
+
+## 🛠️ Usage
+
+1. Open the GUI.
+2. Type your question in the input field.
+3. The system fetches the required context and queries the LLM.
+4. Get accurate answers instantly!
+
+## 🚀 How It Works
+
+1. **Context Extraction:** The system analyzes your project files and metadata.
+2. **Retrieval-Augmented Generation (RAG):** It fetches relevant snippets using smart retrieval.
+3. **LLM Querying:** The refined query is sent to the LLM.
+4. **Answer Generation:** The response is displayed in the GUI.
+
+
+
+
+
+# 📌 Setup Guide
+
+## 🛠️ Prerequisites
+
+To build and run the project, ensure you have the following installed on your system:
+
+### **1. Install Premake5**
+
+Premake5 is used as the build system. Follow these steps to install it:
+
+1. Download Premake5 from the official site: https://premake.github.io/download/
+
+2. Extract the downloaded archive.
+
+3. Add Premake5 to your system PATH:
+
+    - Open **System Properties** → **Advanced** → **Environment Variables**.
+    - Under `System Variables`, find `Path` and click **Edit**.
+    - Click **New** and add the path where `premake5.exe` is located.
+    - Click **OK** to save changes.
+
+4. Verify installation by running the following command in 
+
+    Command Prompt:
+
+    ```sh
+    premake5 --version
+    ```
+
+### **2. Install Visual Studio (MSVC Compiler)**
+
+1. Download and install **Visual Studio** from: https://visualstudio.microsoft.com/
+2. During installation, select the following workloads:
+    - **Desktop development with C++**
+    - Ensure **MSVC v142 (or later)** is checked under **Individual Components**.
+    - Include **CMake tools for Windows** if not already selected.
+3. Restart your system after installation.
+
+------
+
+## 🚀 Project Setup
+
+Once all dependencies are installed, follow these steps:
+
+1. Clone the repository:
+
+    ```sh
+    git clone https://github.com/yourusername/ask-llm.git
+    cd ask-llm
+    ```
+
+2. Run the setup script (Only required once):
+
+    ```sh
+    setup.bat
+    ```
+
+    - This script will:
+        - Download and install all required packages and dependencies.
+        - Build the project automatically.
+
+------
+
+## 🔄 Building the Project
+
+For further development, you don’t need to run `setup.bat` again. Instead, use:
+
+```sh
+build.bat
+```
+
+This will compile the project using the existing setup.
+
+------
+
+## 📚 Libraries Used
+
+The project uses the following external libraries:
+
+- **GLFW** - Window management and input handling.
+- **ImGui** - Immediate-mode GUI library.
+- **LunaSVG** - Scalable Vector Graphics (SVG) rendering.
+- **SpdLog** - Fast and powerful logging library.
+- **nlohmann JSON** - JSON parsing and serialization.
+- **OpenGL** - Graphics rendering API.
+- **dwmapi** - Windows Desktop Window Manager API.
+- **Shlwapi** - Windows Shell Light-weight Utility API.
+- **winmm** - Windows Multimedia API.
+
+------
+
+## ✅ Verification
+
+To confirm everything is set up correctly:
+
+1. Open **Command Prompt** and navigate to the project folder.
+
+2. Run:
+
+    ```sh
+    build.bat
+    ```
+
+3. If the build completes successfully, the setup is complete!
+
+------
+
+For any issues, open an issue on the GitHub repository or contact the project maintainer.
+
+Happy coding! 🚀)";
+    Markdown( markdownText );
+}
+
 
 // For files being dragged and dropped
 void drop_callback(GLFWwindow* window, int count, const char** paths)
@@ -244,6 +507,8 @@ void Application::Draw()
 
     // Render application UI
     ImGui::ShowDemoWindow();
+    MarkdownExample();
+    Get().mChatWindow.Render();
 
 	if(ImGui::GetIO().MouseWheel != 0.0f || ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 		EnableHighFPS();

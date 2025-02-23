@@ -396,7 +396,7 @@ bool Application::InitImGui()
 	GL_INFO("OPENGL - {}", (const char*)glGetString(GL_VERSION));
 
 	glfwSwapInterval(0); // Gives maximum FPS
-	SetStyleColorDarkness();
+	// SetStyleColorDarkness();
 
 	return true;
 }
@@ -506,9 +506,9 @@ void Application::Draw()
     ImGui::NewFrame();
 
     // Render application UI
-    ImGui::ShowDemoWindow();
-    MarkdownExample();
     Get().mChatWindow.Render();
+    ImGui::ShowDemoWindow();
+    // MarkdownExample();
 
 	if(ImGui::GetIO().MouseWheel != 0.0f || ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 		EnableHighFPS();
@@ -674,4 +674,14 @@ void Application::InitFonts()
 	io.Fonts->AddFontFromMemoryTTF((void*)JetBrainsMonoNLRegular, IM_ARRAYSIZE(JetBrainsMonoNLRegular), font_size+2.0f, &font_config);
 	io.Fonts->AddFontFromMemoryTTF((void*)FontAwesomeRegular, IM_ARRAYSIZE(FontAwesomeRegular), (font_size + 4.0f) * 2.0f / 3.0f,
 	                               &icon_config, icons_ranges);
+
+    // io.Fonts->AddFontFromFileTTF( "C:\\Windows\\Fonts\\segoeui.ttf", 24 );
+    // io.Fonts->AddFontFromFileTTF( "C:\\Windows\\Fonts\\segoeuib.ttf", 24 );
+    // io.Fonts->AddFontFromFileTTF( "C:\\Windows\\Fonts\\segoeuib.ttf", 32 );
+    // io.Fonts->AddFontFromFileTTF( "C:\\Windows\\Fonts\\segoeuii.ttf", 24 );
+
+    io.Fonts->AddFontFromFileTTF( "./assets/fonts/AROneSans-Medium.ttf", 24 );
+    io.Fonts->AddFontFromFileTTF( "./assets/fonts/AROneSans-Bold.ttf", 24 );
+    io.Fonts->AddFontFromFileTTF( "./assets/fonts/AROneSans-Bold.ttf", 32 );
+    io.Fonts->AddFontFromFileTTF( "./assets/fonts/AROneSans-Medium.ttf", 24 );
 }

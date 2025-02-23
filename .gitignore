@@ -8,6 +8,9 @@ compile_commands.json
 !packages/glfw/premake5.lua
 !packages/lunasvg/premake5.lua
 !packages/md4c/premake5.lua
+!packages/cpr/premake5.lua
+!packages/curl/premake5.lua
+!packages/imgui_md/premake5.lua
 *.sln
 *.filters
 *.user

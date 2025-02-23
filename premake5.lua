@@ -21,8 +21,11 @@ includeDirs["glfw"]="packages/glfw/include"
 includeDirs["SpdLog"]="packages/spdlog/include"
 includeDirs["ImGui"]="packages/imgui"
 includeDirs["LunaSVG"]="packages/lunasvg/include"
-includeDirs["nlohmann"]="packages/nlohmann"
+includeDirs["nlohmann"]="packages/nlohmann/include"
 includeDirs["md4c"]="packages/md4c/src"
+includeDirs["ImGuiMD"]="packages/imgui_md"
+includeDirs["cpr"]="packages/cpr/include"
+includeDirs["curl"]="packages/curl/include"
 
 -- /MP -- Multithreaded build 
 -- /MT -- Static Linking. Defines _MT 
@@ -31,6 +34,8 @@ include "packages/glfw"
 include "packages/imgui"
 include "packages/lunasvg"
 include "packages/md4c"
+include "packages/imgui_md"
+include "packages/cpr"
 
 project "glfw_opengl"
    kind "ConsoleApp"
@@ -42,17 +47,21 @@ project "glfw_opengl"
    pchsource "src/pch.cpp"
 
    links {
-      "glfw","ImGui","opengl32","LunaSVG","dwmapi","Shlwapi","winmm","md4c"
+      "glfw","ImGui","opengl32","LunaSVG","dwmapi","Shlwapi","winmm","md4c","ImGuiMD",
+      "CPR","cURL","ws2_32", "crypt32", "wldap32", "normaliz"
    }
 
    includedirs{
       "src",
       "%{includeDirs.glfw}",
       "%{includeDirs.ImGui}",
+      "%{includeDirs.ImGuiMD}",
       "%{includeDirs.LunaSVG}",
       "%{includeDirs.SpdLog}",
       "%{includeDirs.md4c}",
-      "%{includeDirs.nlohmann}"
+      "%{includeDirs.nlohmann}",
+      "%{includeDirs.curl}",
+      "%{includeDirs.cpr}"
    }
 
    files { 
@@ -69,7 +78,7 @@ project "glfw_opengl"
       staticruntime "On"
       optimize "Off"
       buildoptions { "/MP","/DEBUG:FULL","/UNICODE" }
-      defines {"GL_DEBUG"}
+      defines {"GL_DEBUG","CURL_STATICLIB"}
 
    filter {"configurations:Release"}
       runtime "Release"

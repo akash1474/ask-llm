@@ -1,0 +1,43 @@
+Here is some starter code for using Vulkan:
+```
+#include <vulkan/vulkan.h>
+
+int main() {
+  // Create an instance of the Vulkan API
+  VkInstance instance;
+  vkCreateInstance(NULL, &instance);
+
+  // Get a pointer to the physical device
+  VkPhysicalDevice physicalDevice = vkGetPhysicalDevice(instance);
+
+  // Create a logical device for the physical device
+  VkLogicalDevice logicalDevice;
+  vkCreateLogicalDevice(physicalDevice, &logicalDevice);
+
+  // Get a pointer to the queue family of the logical device
+  uint32_t queueFamilyIndex = vkGetQueueFamilyIndex(logicalDevice);
+
+  // Create a command buffer for the queue family
+  VkCommandBuffer commandBuffer;
+  vkCreateCommandBuffer(logicalDevice, &commandBuffer);
+
+  // Record commands into the command buffer
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+  vkCmdDraw(commandBuffer, drawCount, instanceCount, 0, 0);
+
+  // Submit the command buffer to the queue for execution
+  vkQueueSubmit(queueFamilyIndex, commandBuffer, NULL);
+
+  // Wait for the command buffer to complete
+  vkWaitForFences(logicalDevice, 1, &commandBuffer.fence, VK_TRUE, UINT64_MAX);
+
+  // Destroy the command buffer and logical device
+  vkDestroyCommandBuffer(logicalDevice, commandBuffer);
+  vkDestroyLogicalDevice(instance, logicalDevice);
+
+  return 0;
+}
+```
+This code creates an instance of the Vulkan API, gets a pointer to a physical device, creates a logical device for that physical device, and then uses that logical device to create a command buffer and record commands into it. The code then submits the command buffer to the queue for execution and waits for it to complete before destroying the command buffer and logical device.
+
+This is just a basic example of using Vulkan, and there are many other features and functions that you can use in your Vulkan application. You can find more information about these in the Vulkan documentation.

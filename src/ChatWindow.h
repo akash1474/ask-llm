@@ -1,26 +1,49 @@
 #pragma once
 
+#include <future>
 #include <vector>
 #include <string>
 #include <mutex>
+#include "LLMChatManager.h"
+
+enum class ChatMessageType{
+    User,
+    Assistant
+};
+
+struct ChatMessage {
+    std::string text;
+    ChatMessageType type;
+    size_t chatId;
+    ChatMessage(){}
+    ChatMessage(std::string aText,ChatMessageType aType,size_t id):text(aText),type(aType),chatId(id){}
+};
 
 class ChatWindow {
 public:
     ChatWindow();
     ~ChatWindow();
 
-    // Renders the chat window
     void Render();
-
-    // Handles sending messages and interacting with the LLM API
     void SendMessage();
 
-private:
-    std::vector<std::string> chatHistory; // Stores messages
-    char userInput[1024];                // Current input buffer
-    bool scrollToBottom;                   // Scroll flag
-    std::mutex chatMutex;                  // Thread safety for chat history
+    static int codeBlockNumber;
+    static int GetCodeBlockNumber(){
+        return codeBlockNumber++;
+    }
+    static void ResetCodeBlockNumber(){
+        codeBlockNumber=0;
+    }
 
-    // Placeholder for API call (replace with actual implementation)
-    std::string QueryLLM(const std::string& message);
+private:
+    size_t mChatID=0;
+    std::future<void> mFuture;
+    LLMChatManager mChatManager;
+    std::vector<ChatMessage> chatHistory;
+    char userInput[1024];
+    bool scrollToBottom;
+    std::mutex chatMutex;
+    void HandleStream();
+    void MakeRequest(std::string message);
 };
+

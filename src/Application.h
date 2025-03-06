@@ -7,8 +7,8 @@ class Application
 {
 private:
 	GLFWwindow* mWindow{0};
-	int width = 1100;
-	int height = 650;
+	int width = 500;
+	int height = 700;
 	double mFrameRate;
 	double mFrameTime;
 	bool mIsFocused;

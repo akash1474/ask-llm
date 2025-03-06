@@ -4,6 +4,13 @@ This example demonstrates how to create and use a simple vertex shader, fragment
 
 [] Todo 1
 [X] Todo 2
+# Header 1
+## Header 2
+### Header 3
+
+### Introducing "TxEdit" a light-weight text editor for Windows
+[ask-llm](https://github.com/akash1474/ask-llm),
+[imgui_md](https://github.com/Aarkham/imgui_md)
 
 ### Vertex Shader
 

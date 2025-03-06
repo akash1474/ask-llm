@@ -1,43 +1,69 @@
-Here is some starter code for using Vulkan:
-```
-#include <vulkan/vulkan.h>
+```cpp
+#include <iostream>
+
+// Function to check if a number is prime
+bool isPrime(int num) {
+    // Handle edge cases
+    if (num <= 1) return false;
+    if (num == 2) return true;  // 2 is the only even prime number
+    if (num % 2 == 0) return false;
+
+    // Check odd factors up to sqrt(num)
+    for (int i = 3; i * i <= num; i += 2) {
+        if (num % i == 0) return false;
+    }
+
+    return true;
+}
+
+// Function to check if a number is prime
+void checkPrime(int num) {
+    // Call the function to check if the number is prime
+    bool prime = isPrime(num);
+
+    // Print the result
+    std::cout << num << " is ";
+    (prime ? "" : "not ")  ;
+    std::cout << "a prime number." << std::endl;
+}
 
 int main() {
-  // Create an instance of the Vulkan API
-  VkInstance instance;
-  vkCreateInstance(NULL, &instance);
+    int num;
+    std::cout << "Enter a number: ";
+    std::cin >> num;
 
-  // Get a pointer to the physical device
-  VkPhysicalDevice physicalDevice = vkGetPhysicalDevice(instance);
+    // Call the function to check if the number is prime
+    checkPrime(num);
 
-  // Create a logical device for the physical device
-  VkLogicalDevice logicalDevice;
-  vkCreateLogicalDevice(physicalDevice, &logicalDevice);
-
-  // Get a pointer to the queue family of the logical device
-  uint32_t queueFamilyIndex = vkGetQueueFamilyIndex(logicalDevice);
-
-  // Create a command buffer for the queue family
-  VkCommandBuffer commandBuffer;
-  vkCreateCommandBuffer(logicalDevice, &commandBuffer);
-
-  // Record commands into the command buffer
-  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-  vkCmdDraw(commandBuffer, drawCount, instanceCount, 0, 0);
-
-  // Submit the command buffer to the queue for execution
-  vkQueueSubmit(queueFamilyIndex, commandBuffer, NULL);
-
-  // Wait for the command buffer to complete
-  vkWaitForFences(logicalDevice, 1, &commandBuffer.fence, VK_TRUE, UINT64_MAX);
-
-  // Destroy the command buffer and logical device
-  vkDestroyCommandBuffer(logicalDevice, commandBuffer);
-  vkDestroyLogicalDevice(instance, logicalDevice);
-
-  return 0;
+    return 0;
 }
 ```
-This code creates an instance of the Vulkan API, gets a pointer to a physical device, creates a logical device for that physical device, and then uses that logical device to create a command buffer and record commands into it. The code then submits the command buffer to the queue for execution and waits for it to complete before destroying the command buffer and logical device.
 
-This is just a basic example of using Vulkan, and there are many other features and functions that you can use in your Vulkan application. You can find more information about these in the Vulkan documentation.
+Explanation:
+
+This code defines two functions: `isPrime` and `checkPrime`. The `isPrime` function takes an integer as input and returns a boolean value indicating whether the number is prime or not.
+
+Here's a step-by-step explanation of how it works:
+
+1.  **Handle edge cases**: We handle three special cases:
+    *   If the input number is less than or equal to 1, we return false because numbers less than 2 are not prime.
+    *   If the input number is exactly 2, we return true because 2 is the only even prime number.
+    *   If the input number is divisible by 2 (i.e., `num % 2 == 0`), we return false because all other even numbers are not prime.
+
+2.  **Check odd factors**: We use a loop to check if the input number has any odd factors. We start checking from 3 and increment by 2 each time because we're only interested in odd numbers (since even numbers have already been handled).
+
+    *   Inside the loop, we use the modulo operator (`%`) to find the remainder when `num` is divided by the current iteration `i`. If the remainder is zero, it means that `i` is a factor of `num`, so we return false.
+    *   We continue checking odd factors up to the square root of `num` (inclusive). This is because any factors larger than the square root would have corresponding smaller factors that were already checked.
+
+3.  **Return result**: If we've checked all possible factors and haven't found any, we return true, indicating that the number is prime.
+
+The `checkPrime` function uses the `isPrime` function to check if a given number is prime. It takes an integer as input, calls the `isPrime` function with this number, and then prints whether the number is prime or not.
+
+**Time complexity:**
+
+*   The time complexity of the `isPrime` function is O(sqrt(n)) because we're checking odd factors up to the square root of the input number.
+*   The time complexity of the `checkPrime` function is also O(sqrt(n)) since it calls the `isPrime` function.
+
+**Space complexity:**
+
+The space complexity of both functions is O(1), which means they use constant memory. This is because we're only using a fixed amount of memory to store variables, regardless of the input size.

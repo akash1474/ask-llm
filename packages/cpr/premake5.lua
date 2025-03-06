@@ -1,6 +1,7 @@
 include "../curl"
 
 
+-- cpr v1.11.1
 project "CPR"
 	kind "StaticLib"
 	language "C++"

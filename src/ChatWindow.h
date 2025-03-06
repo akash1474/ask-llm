@@ -45,5 +45,6 @@ private:
     std::mutex chatMutex;
     void HandleStream();
     void MakeRequest(std::string message);
+    void RenderChatMessage(const char* text);
 };
 

@@ -1,3 +1,4 @@
+-- curl v8.11.0
 project "cURL"
 	kind "StaticLib"
 	language "C"

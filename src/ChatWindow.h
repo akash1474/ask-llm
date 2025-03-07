@@ -42,9 +42,11 @@ private:
     std::vector<ChatMessage> chatHistory;
     char userInput[1024];
     bool scrollToBottom;
+    bool hasError=false;
     std::mutex chatMutex;
     void HandleStream();
     void MakeRequest(std::string message);
     void RenderChatMessage(const char* text);
+    void RenderError(const char* aErrorMessage);
 };
 

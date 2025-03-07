@@ -1,3 +1,4 @@
+#include "FontAwesome6.h"
 #include "imgui_internal.h"
 #include "pch.h"
 #include "ChatWindow.h"
@@ -97,17 +98,30 @@ struct my_markdown : public imgui_md
         {
             m_last_code_block_text.clear();
             ImGui::Text("");
+
             ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+
+
             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 170, 0, 255)); // Green for block code
             ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(30, 30, 30, 255)); // Dark gray background
             std::string id=std::string("##CodeBlock"+std::to_string(ChatWindow::GetCodeBlockNumber()));
             ImGui::BeginChild(id.c_str(),ImVec2(-FLT_MIN, 0.0f), ImGuiChildFlags_Border | ImGuiChildFlags_AutoResizeY);
+
+            std::string idtitle=std::string("##CodeBlockDetails"+std::to_string(ChatWindow::GetCodeBlockNumber()));
+            ImGui::PushStyleColor(ImGuiCol_FrameBg,ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
+            ImGui::BeginChild(idtitle.c_str(),ImVec2(-FLT_MIN, 30.0f),ImGuiChildFlags_FrameStyle);
+                ImGui::Text("%s", std::string(details->lang.text,details->lang.text+details->lang.substr_offsets[1]).c_str());
+                ImGui::SameLine();
+                ImGui::Text(ICON_FA_COPY" Copy");
+                // ImGui::Text()
+            ImGui::EndChild();
+            ImGui::PopStyleColor();
         }
         else
         {
             ImGui::PopStyleColor(2);
             ImGui::SetCursorPos({ImGui::GetWindowWidth()-60.0f,10.0f});
-            if(ImGui::Button("Copy"))
+            if(ImGui::Button(ICON_FA_COPY"##ICONBUTN"))
                 ImGui::SetClipboardText(m_last_code_block_text.c_str());
             ImGui::EndChild();
             ImGui::PopFont();
@@ -193,11 +207,16 @@ void ChatWindow::RenderChatMessage(const char* text) {
     if(textWidth < chatWidth)
         chatWidth=textWidth+style.WindowPadding.x*2.0f;
 
-    // ImGui::SetCursorPos({parentWidth-chatWidth-50.0f,ImGui::GetCursorPos().y});
-    // if(ImGui::Button(std::string("Edit##"+uid).c_str())){
-    //     std::strcpy(userInput,text);
-    // }
-    ImGui::InvisibleButton(std::string(std::string("##bnt")+uid.c_str()).c_str(),{parentWidth-chatWidth-10.0f,10.0f});
+    ImGui::InvisibleButton(std::string(std::string("##bnt")+uid.c_str()).c_str(),{parentWidth-chatWidth-10.0f-50.0f,10.0f});
+    ImGui::SameLine();
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+    ImGui::PushStyleColor(ImGuiCol_Button,ImGuiCol_WindowBg);
+    ImGui::PushStyleColor(ImGuiCol_Text,ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
+    if(ImGui::Button(std::string(ICON_FA_PEN"##"+uid).c_str())){
+        std::strcpy(userInput,text);
+    }
+    ImGui::PopFont();
+    ImGui::PopStyleColor(2);
     ImGui::SameLine();
 
     ImGui::BeginChild((std::string("ChatMessage")+std::to_string((size_t)text)).c_str(), ImVec2(chatWidth, 0),ImGuiChildFlags_AutoResizeY |ImGuiChildFlags_AlwaysUseWindowPadding|ImGuiChildFlags_FrameStyle);
@@ -210,15 +229,26 @@ void ChatWindow::RenderChatMessage(const char* text) {
     ImGui::PopStyleVar(2);    // Restore styles
 }
 
+void ChatWindow::RenderError(const char* aErrorMessage){
+    const float textWidth=ImGui::CalcTextSize(aErrorMessage).x+65.0f;
+    ImGui::InvisibleButton("##errorinvisible",{ImGui::GetWindowWidth()-textWidth,10.0f});
+    ImGui::SameLine();
+    ImGui::BeginChild("##Error");
+    ImGui::TextColored(ImVec4(0.897f,0.140f,0.367f,1.000f),ICON_FA_CIRCLE_EXCLAMATION);
+    ImGui::SameLine();
+    ImGui::Text("%s", aErrorMessage);
+    ImGui::EndChild();
+}
+
 void ChatWindow::Render() {
     static my_markdown markdownRenderer;
     ChatWindow::ResetCodeBlockNumber();
     int childNo=0;
 #ifdef GL_DEBUG
-    static bool loadTestMarkdown=false;
+    static bool loadTestMarkdown=true;
     if(loadTestMarkdown){
         loadTestMarkdown=false;
-        std::ifstream file("test.md",std::ios::binary);
+        std::ifstream file("response.txt",std::ios::binary);
         std::ostringstream data;
         data << file.rdbuf();
         file.close();
@@ -235,14 +265,21 @@ void ChatWindow::Render() {
     ImGui::SetNextWindowPos({0,0});
     ImGui::Begin("Chat with LLM",0,ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoDecoration);
 
+
+    if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && ImGuiIO().MouseWheel != 0.0f) {
+        GL_INFO("Scrolling");
+        scrollToBottom=false;
+    }
+
+
     ImGui::BeginChild("ChatHistory", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 60), true);
     
 
 
     {
         ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[3]);
-        // RenderChatMessage("Hello, this is a chat message!");
-        // RenderChatMessage("Here’s a basic example of how to create an ImGui child window styled like a chat message inside a main ImGui window. This child window will have a rounded border, contain text, and have a width of 80% of the parent window.");
+        RenderChatMessage("Hello, this is a chat message!");
+        RenderChatMessage("Here’s a basic example of how to create an ImGui child window styled like a chat message inside a main ImGui window. This child window will have a rounded border, contain text, and have a width of 80% of the parent window.");
         std::scoped_lock<std::mutex> lock(chatMutex);
         for (const auto& msg : chatHistory) {
             if (msg.type == ChatMessageType::User) {
@@ -254,15 +291,17 @@ void ChatWindow::Render() {
         }
         ImGui::PopFont();
     }
-
-    
-    if (scrollToBottom) {
-        ImGui::SetScrollHereY(1.0f);
-        scrollToBottom = false;
+    if(this->hasError){
+        RenderError("Unable to reach the server!");
+        ImGui::SetScrollY(ImGui::GetScrollMaxY());
     }
 
-    if(mChatManager.mIsGettingResponse)
+
+    if(mChatManager.mIsGettingResponse){
         HandleStream();
+        if(scrollToBottom)
+            ImGui::SetScrollY(ImGui::GetScrollMaxY());
+    }
     
     ImGui::EndChild();
 
@@ -277,6 +316,11 @@ void ChatWindow::Render() {
         this->SendMessage();
     }
 
+    // if(this->scrollToBottom){
+    //     ImGui::SetScrollY(ImGui::GetScrollMaxY());
+    //     this->scrollToBottom=false;
+    // }
+
     ImGui::End();
 
 }
@@ -284,14 +328,14 @@ void ChatWindow::Render() {
 void ChatWindow::HandleStream(){
     std::scoped_lock<std::mutex> lock(chatMutex);
     ChatMessage& msg=chatHistory.back();
-    // GL_WARN(mChatManager.GetResponse());
     msg.text=mChatManager.GetResponse();
-    ImGui::SetScrollY(ImGui::GetScrollMaxY());
 }
 
 void ChatWindow::MakeRequest(std::string message){
     GL_INFO("Message[WORKER-THREAD]:{}",message);
-    mChatManager.StreamResponse("llama3.2", message);
+    if(!mChatManager.StreamResponse("llama3.2", message))
+        this->hasError=true;
+
     // mChatManager.StreamResponse("codellama:7b", message);
 }
 
@@ -312,7 +356,8 @@ void ChatWindow::SendMessage() {
     mFuture=std::async(std::launch::async,&ChatWindow::MakeRequest,this,std::string(userInput));
 
     userInput[0]='\0';
-    scrollToBottom = true;
+    scrollToBottom=true;
+    this->hasError=false;
 }
 
 

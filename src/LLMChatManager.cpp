@@ -66,7 +66,7 @@ bool LLMChatManager::CheckServer() {
     }
 }
 
-void LLMChatManager::StreamResponse(const std::string& model, const std::string& prompt) {
+bool LLMChatManager::StreamResponse(const std::string& model, const std::string& prompt) {
     this->mResponseText.clear();
     try {
         nlohmann::json payload = {
@@ -96,11 +96,14 @@ void LLMChatManager::StreamResponse(const std::string& model, const std::string&
             if (!response.text.empty()) {
                 GL_CRITICAL("Response: {}",response.text);
             }
+            return false;
         }
 
         GL_INFO("Response complete!");
+        return true;
 
     } catch (const std::exception& e) {
         GL_CRITICAL("Error making request: {}",e.what());
+        return true;
     }
 }

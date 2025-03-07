@@ -18,5 +18,5 @@ public:
 
     std::string GetResponse(){return this->mResponseText;};
     bool CheckServer();
-    void StreamResponse(const std::string& model, const std::string& prompt);
+    bool StreamResponse(const std::string& model, const std::string& prompt);
 };

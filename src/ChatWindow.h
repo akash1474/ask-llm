@@ -40,7 +40,7 @@ private:
     std::future<void> mFuture;
     LLMChatManager mChatManager;
     std::vector<ChatMessage> chatHistory;
-    char userInput[1024];
+    char userInput[2048];
     bool scrollToBottom;
     bool hasError=false;
     std::mutex chatMutex;
@@ -49,4 +49,3 @@ private:
     void RenderChatMessage(const char* text);
     void RenderError(const char* aErrorMessage);
 };
-

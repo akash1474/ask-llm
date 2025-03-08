@@ -94,35 +94,40 @@ struct my_markdown : public imgui_md
 
     void BLOCK_CODE(const MD_BLOCK_CODE_DETAIL* details, bool e) override
     {
+        static bool m_shouldcopy=false;
         if (e)
         {
             m_last_code_block_text.clear();
             ImGui::Text("");
 
             ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+            std::string idtitle=std::string("##CodeBlockDetails"+std::to_string(ChatWindow::GetCodeBlockNumber()));
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,ImVec2(0.0f,0.0f));
+            ImGui::BeginChild(idtitle.c_str(),ImVec2(-FLT_MIN, 33.0f),ImGuiChildFlags_FrameStyle);
+                ImGui::Text("%s", std::string(details->lang.text,details->lang.text+details->lang.substr_offsets[1]).c_str());
+                ImGui::SameLine();
+                const float availWidth=ImGui::GetContentRegionAvail().x;
+                ImGui::Dummy({availWidth-75.0f,10.0f});
+                ImGui::SameLine();
+                if(ImGui::Button(ICON_FA_COPY" Copy",{75.0f,-1}))
+                    m_shouldcopy=true;
 
+            ImGui::EndChild();
 
             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 170, 0, 255)); // Green for block code
             ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(30, 30, 30, 255)); // Dark gray background
             std::string id=std::string("##CodeBlock"+std::to_string(ChatWindow::GetCodeBlockNumber()));
             ImGui::BeginChild(id.c_str(),ImVec2(-FLT_MIN, 0.0f), ImGuiChildFlags_Border | ImGuiChildFlags_AutoResizeY);
-
-            std::string idtitle=std::string("##CodeBlockDetails"+std::to_string(ChatWindow::GetCodeBlockNumber()));
-            ImGui::PushStyleColor(ImGuiCol_FrameBg,ImGui::GetStyleColorVec4(ImGuiCol_WindowBg));
-            ImGui::BeginChild(idtitle.c_str(),ImVec2(-FLT_MIN, 30.0f),ImGuiChildFlags_FrameStyle);
-                ImGui::Text("%s", std::string(details->lang.text,details->lang.text+details->lang.substr_offsets[1]).c_str());
-                ImGui::SameLine();
-                ImGui::Text(ICON_FA_COPY" Copy");
-                // ImGui::Text()
-            ImGui::EndChild();
-            ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
         }
         else
         {
             ImGui::PopStyleColor(2);
             ImGui::SetCursorPos({ImGui::GetWindowWidth()-60.0f,10.0f});
-            if(ImGui::Button(ICON_FA_COPY"##ICONBUTN"))
+            if(m_shouldcopy){
                 ImGui::SetClipboardText(m_last_code_block_text.c_str());
+                m_shouldcopy=false;
+            }
             ImGui::EndChild();
             ImGui::PopFont();
         }
@@ -140,7 +145,7 @@ struct my_markdown : public imgui_md
                 m_in_table = true;
                 m_current_table_id = "MarkdownTable_" + std::to_string(table_counter++);
                 
-                m_column_count = detail->col_count; // Default to 3 columns if not specified
+                m_column_count = detail->col_count;
                 
                 ImGui::BeginTable(m_current_table_id.c_str(), m_column_count, 
                     ImGuiTableFlags_Borders | 

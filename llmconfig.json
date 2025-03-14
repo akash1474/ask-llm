@@ -1,0 +1,30 @@
+{
+    "ignored_folders": [
+        "node_modules",
+        ".git",
+        ".vs",
+        ".cache",
+        ".venv",
+        "env",
+        ".cache",
+        "__pycache__",
+        "build",
+        "dist",
+        "packages",
+        "assets",
+        "db",
+        "scripts"
+    ],
+    "file_extensions": [
+        ".py",
+        ".java",
+        ".css",
+        ".js",
+        ".c",
+        ".cpp",
+        ".ts",
+        ".html",
+        ".h",
+        ".hpp"
+    ]
+}

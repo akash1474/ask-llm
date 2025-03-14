@@ -1,17 +1,33 @@
+#include "Log.h"
+#include "pch.h"
 #include "FontAwesome6.h"
 #include "imgui_internal.h"
-#include "pch.h"
 #include "ChatWindow.h"
 #include "imgui.h"
+#include <chrono>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 #include <future>
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <thread>
 #include "imgui_md.h"
+#define IMSPINNER_DEMO
+#include "imspinner.h"
+#include "nlohmann/json.hpp"
 
-ChatWindow::ChatWindow() : scrollToBottom(false) {}
-ChatWindow::~ChatWindow() {}
+ChatWindow::ChatWindow() : scrollToBottom(false) {
+    mChatManager.SetBaseURL("localhost",8000);
+    std::thread server_thread(&ChatWindow::StartServer,this);
+    server_thread.detach();
+    LoadConversationHistory();
+    mFuture=std::async(std::launch::async,&ChatWindow::MakeRequest,this,std::string("INIT"));
+}
+ChatWindow::~ChatWindow() {
+    StopServer();
+}
 int ChatWindow::codeBlockNumber=0;
 
 struct my_markdown : public imgui_md 
@@ -81,14 +97,14 @@ struct my_markdown : public imgui_md
     {
         if (e)
         {
-            // ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+            ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
             ImGui::SameLine(0.0f,0.0f);  // Prevent new line
             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 165, 0, 255));  // Orange text
         }
         else 
         {
             ImGui::PopStyleColor();
-            // ImGui::PopFont();
+            ImGui::PopFont();
         }
     }
 
@@ -245,12 +261,18 @@ void ChatWindow::RenderError(const char* aErrorMessage){
     ImGui::EndChild();
 }
 
+std::vector<std::string> llm_models = {
+    "gemini-2.0-flash",
+    // "llama3.2"
+};
+static int selected_model_idx = 0;
+
 void ChatWindow::Render() {
     static my_markdown markdownRenderer;
     ChatWindow::ResetCodeBlockNumber();
     int childNo=0;
 #ifdef GL_DEBUG
-    static bool loadTestMarkdown=true;
+    static bool loadTestMarkdown=false;
     if(loadTestMarkdown){
         loadTestMarkdown=false;
         std::ifstream file("response.txt",std::ios::binary);
@@ -276,6 +298,29 @@ void ChatWindow::Render() {
         scrollToBottom=false;
     }
 
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[8]);
+    ImGui::Text("LLM Model:");
+    ImGui::SameLine();
+    ImGui::PushItemWidth(200.0f);
+    if (ImGui::BeginCombo("##LLM_Model", llm_models[selected_model_idx].c_str())) {
+        for (int i = 0; i < llm_models.size(); i++) {
+            bool is_selected = (selected_model_idx == i);
+            if (ImGui::Selectable(llm_models[i].c_str(), is_selected)) {
+                selected_model_idx = i;  // Update selected model
+                mCurrentModel=llm_models[selected_model_idx];
+            }
+            if (is_selected) {
+                ImGui::SetItemDefaultFocus();  // Highlight selected item
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::PopItemWidth();
+    ImGui::SameLine();
+    ImGui::Text("Use Project Context:");
+    ImGui::SameLine();
+    ImGui::Checkbox("##usecontext",&mUseVectorDB);
+    ImGui::PopFont();
 
     ImGui::BeginChild("ChatHistory", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() - 60), true);
     
@@ -283,8 +328,6 @@ void ChatWindow::Render() {
 
     {
         ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[3]);
-        RenderChatMessage("Hello, this is a chat message!");
-        RenderChatMessage("Here’s a basic example of how to create an ImGui child window styled like a chat message inside a main ImGui window. This child window will have a rounded border, contain text, and have a width of 80% of the parent window.");
         std::scoped_lock<std::mutex> lock(chatMutex);
         for (const auto& msg : chatHistory) {
             if (msg.type == ChatMessageType::User) {
@@ -307,6 +350,13 @@ void ChatWindow::Render() {
         if(scrollToBottom)
             ImGui::SetScrollY(ImGui::GetScrollMaxY());
     }
+    ImGui::InvisibleButton("##spacing", {100.0,100.0f});
+
+    static int isScrolledToBottom=0;
+    if(isScrolledToBottom < 5){
+        ImGui::SetScrollY(ImGui::GetScrollMaxY());
+        isScrolledToBottom++;
+    }
     
     ImGui::EndChild();
 
@@ -321,10 +371,24 @@ void ChatWindow::Render() {
         this->SendMessage();
     }
 
-    // if(this->scrollToBottom){
-    //     ImGui::SetScrollY(ImGui::GetScrollMaxY());
-    //     this->scrollToBottom=false;
-    // }
+    if(!mChatManager.GetMessageText().empty()){
+        const std::string& msg=mChatManager.GetMessageText();
+        const float bannerHeight=40.0f;
+        const float bannerWidth=50.0f+ImGui::CalcTextSize(msg.c_str()).x;
+        ImGui::SetCursorPos(ImVec2((ImGui::GetWindowWidth()-bannerWidth)*0.5f, ImGui::GetWindowHeight()-bannerHeight-110.0f)); // Set static position inside the main window
+
+        // Child window that stays fixed
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding,5.0f);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg,IM_COL32(30,30,30,255));
+        ImGui::BeginChild("FixedChild", ImVec2(bannerWidth, bannerHeight),  1,ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMouseInputs);
+        ImSpinner::SpinnerArcRotation("##LoadingSpinner",10.0f,5,{1.0f,1.0f,1.0f,1.0f},4.0f,4,3);
+        ImGui::SameLine();
+        ImGui::TextWrapped("%s",msg.c_str());
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar();
+    }
+    // ImSpinner::demoSpinners();
 
     ImGui::End();
 
@@ -338,7 +402,13 @@ void ChatWindow::HandleStream(){
 
 void ChatWindow::MakeRequest(std::string message){
     GL_INFO("Message[WORKER-THREAD]:{}",message);
-    if(!mChatManager.StreamResponse("llama3.2", message))
+    if(message=="INIT"){
+        if(!mChatManager.InitializeConnectionWithBackend())
+            this->hasError=true;
+
+        return;
+    }
+    if(!mChatManager.StreamResponse(mCurrentModel, message,mUseVectorDB))
         this->hasError=true;
 
     // mChatManager.StreamResponse("codellama:7b", message);
@@ -365,62 +435,64 @@ void ChatWindow::SendMessage() {
     this->hasError=false;
 }
 
+void ChatWindow::LoadConversationHistory(){
+    std::string filePath=std::filesystem::current_path().generic_string() + "/.cache/chat_history.json";
+    if(!std::filesystem::exists(filePath))
+        return;
 
-//call this function to render your markdown
-void markdown(const char* str, const char* str_end)
-{
-    static my_markdown s_printer;
-    s_printer.print(str, str_end);
+    std::ifstream file(filePath);
+    nlohmann::json conversations;
+    conversations << file;
+
+    if(!conversations.is_array()){
+        GL_CRITICAL("Conversation History should be an array");
+        return;
+    }
+
+    chatHistory.clear();
+    for (const auto& obj : conversations) {
+        if(obj.contains("type") && obj["type"].is_string() && obj.contains("content") && obj["content"].is_string()){
+            const std::string& type=obj["type"];
+            const std::string& content=obj["content"];
+
+            if(type=="ai")
+            {
+                chatHistory.emplace_back(content,ChatMessageType::Assistant,mChatID++);
+            }
+            else
+            {
+                chatHistory.emplace_back(content,ChatMessageType::User,mChatID++);
+            }
+        }
+    }
+
+    GL_INFO("Chat History Loaded");
 }
 
-void TestMarkdown(){
-    static const char* markdownText = 
-    "# Heading 1\n"
-    "## Heading 2\n"
-    "### Heading 3\n"
-    "\n"
-    "**Bold Text** and *Italic Text* and ***Bold Italic Text***\n"
-    "\n"
-    "Inline `code` example.\n"
-    "\n"
-    "```\n"
-    "// Code block\n"
-    "int main() {\n"
-    "    printf(\"Hello, Markdown in ImGui!\");\n"
-    "    return 0;\n"
-    "}\n"
-    "```\n"
-    "\n"
-    "[Click here for example link](https://example.com)\n"
-    "\n"
-    "---\n"
-    "\n"
-    "- Unordered list item 1\n"
-    "- Unordered list item 2\n"
-    "  - Nested item 1\n"
-    "  - Nested item 2\n"
-    "\n"
-    "1. Ordered list item 1\n"
-    "2. Ordered list item 2\n"
-    "\n"
-    "> This is a blockquote.\n"
-    "> It spans multiple lines.\n"
-    "\n"
-    "### Table Example\n"
-    "| Name  | Age | Country  |\n"
-    "|-------|-----|---------|\n"
-    "| Alice |  24 | USA     |\n"
-    "| Bob   |  30 | Canada  |\n"
-    "\n"
-    "![Example Image](https://via.placeholder.com/150)\n"
-    "\n"
-    // "<div class=\"red\">This text should be red if custom div classes are handled.</div>\n"
-    "\n"
-    "That's all!";
 
+void ChatWindow::StartServer(){
+    STARTUPINFOA si = { sizeof(STARTUPINFOA) };
+    ZeroMemory(&mServerProcessInfo, sizeof(PROCESS_INFORMATION));
 
-    ImGui::SetNextWindowSize({600,0},ImGuiCond_FirstUseEver);
-    ImGui::Begin("Markdown Viewer",0,ImGuiWindowFlags_NoMove);
-    markdown(markdownText, markdownText + strlen(markdownText));
-    ImGui::End();
+    // Command to start the Uvicorn server
+    const char* command = "cmd /C uvicorn scripts.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir scripts";
+
+    // Create the process
+    if (!CreateProcessA(NULL, const_cast<char*>(command), NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &mServerProcessInfo)) {
+        std::cerr << "Error: Failed to start the Python server!" << std::endl;
+    } else {
+        std::cout << "Python server started with PID: " << mServerProcessInfo.dwProcessId << std::endl;
+    }
+}
+
+void ChatWindow::StopServer(){
+    if (mServerProcessInfo.hProcess) {
+        std::cout << "Stopping Python server..." << std::endl;
+        TerminateProcess(mServerProcessInfo.hProcess, 0);
+        CloseHandle(mServerProcessInfo.hProcess);
+        CloseHandle(mServerProcessInfo.hThread);
+        atexit([]() {
+            system("taskkill /F /IM python.exe /T");
+        });
+    }
 }

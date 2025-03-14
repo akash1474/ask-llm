@@ -428,4 +428,6 @@ void Application::InitFonts()
     io.Fonts->AddFontFromFileTTF( "./assets/fonts/AROneSans-Bold.ttf", 36 );
     io.Fonts->AddFontFromFileTTF( "./assets/fonts/AROneSans-Bold.ttf", 32 );
     io.Fonts->AddFontFromFileTTF( "./assets/fonts/AROneSans-Medium.ttf", 24 );
+
+	io.Fonts->AddFontFromMemoryTTF((void*)JetBrainsMonoNLRegular, IM_ARRAYSIZE(JetBrainsMonoNLRegular), font_size, &font_config);
 }

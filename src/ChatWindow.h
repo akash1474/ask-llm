@@ -5,6 +5,7 @@
 #include <string>
 #include <mutex>
 #include "LLMChatManager.h"
+#include "windows.h"
 
 enum class ChatMessageType{
     User,
@@ -37,9 +38,12 @@ public:
 
 private:
     size_t mChatID=0;
+    bool mUseVectorDB=false;
+    std::string mCurrentModel="gemini-2.0-flash";
     std::future<void> mFuture;
     LLMChatManager mChatManager;
     std::vector<ChatMessage> chatHistory;
+    PROCESS_INFORMATION mServerProcessInfo;
     char userInput[2048];
     bool scrollToBottom;
     bool hasError=false;
@@ -48,4 +52,7 @@ private:
     void MakeRequest(std::string message);
     void RenderChatMessage(const char* text);
     void RenderError(const char* aErrorMessage);
+    void LoadConversationHistory();
+    void StartServer();
+    void StopServer();
 };
